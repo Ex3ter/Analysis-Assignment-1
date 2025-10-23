@@ -1,0 +1,197 @@
+---
+title: "Assignment 1"
+author: "Marcus DeSante"
+date: "2025-10-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+The data I have chosen for this assignment is my first 25 matches of 2XKO.  2XKO is, in the words of its creators Riot Games, "a 2v2 tag-team fighting game".  It is structured as two teams of two characters dueling each other to knockout in a best-of-three match.  The victor of each round is whoever depletes their opponent's life total to zero first.
+
+I chose this data set because I am just starting the game, and decided it would be a good source of relatively unbiased data as I have no experience with the game. I can also see how my choices affect my gameplay and if my win rate changes over time.  Additionally, it allowed me to use this assignment as a source of motivation to play the game, as it was now part of my grade.
+
+These types of games are known for their complexity, so I will omit many of the details of how this game functions.  However, I will quickly cover the elements that appear in my data.  I have also included several screenshots of the game to act as visual aides.
+
+
+An explanation for each column of the data:
+
+  Date:  The date that the given row entry was recorded.
+  
+  Hour:  The hour the given row entry was recorded.  I chose to use hour instead of exact time due to the difficulty of getting precise time measurements mid-game.
+  
+  Game_number:  The number of the data entry.  Likely unnecessary, but it saved me when .tsv decided to mess with my formatting.
+  
+  Match_type:  2XKO has multiple gameplay modes, namely Casual, Ranked, Private, Versus, and Training.  I included this in the chance that I decided to swap to Ranked, but as I only played Casual matches during this data collection period, this data is unnecessary.  "Casual" refers to a mode where you are semi-randomly matched against other players with no consideration of skill level.
+  
+  My_point:  My first character of the match.  As this is a tag-team game, when picking your characters, you pick two characters, a first character referred to as your "point" and a second character referred to as your "anchor".  I always pick the character Yasuo as my point.
+  
+  My_anchor:  My second character of the match.  Neither this data nor the My_point data change, so this is unnecessary.  I always pick the character Jinx as my anchor.
+  
+  My_fuse:  "Fuses" are modifiers you equip your team with that give you access to different system mechanics.  There are five in total.  You will see me switch from "Sidekick" (a fuse that locks your anchor out of playing the game in exchange for increasing the power of your point character) to "Double Down" (a fuse that increases your damage potential as a team).
+  
+  Opponent_point:  Opponent's point character.
+  
+  Opponent_anchor:  Opponent's anchor character.
+  
+  Opponent_fuse:  Opponent's fuse.
+  
+  W.L:  The win/lose record of the match.  This is formatted as my wins-my losses.  As it is a best-of-three format, the winner will have two points. The exception is the first data point, where my opponent disconnected halfway through the second round.
+  
+  Win:  Whether I won or not.  A 1 means I won, a 0 means I lost.  I was originally going to be clever and find a way to automatically convert the W.L into this using R, but I realized it would be a lot less work to just do it manually.
+  
+  Match_duration:  The duration of each round in the match in seconds.
+
+
+This data was collected both during the match and afterward.  This was facilitated by 2XKO's built-in match replay system, which lets you rewatch matches you have played previously at your leisure.  This feature was very helpful in gathering this data, particularly the match duration data.
+
+
+
+# The code
+
+Moving into the actual analysis, I need to start by cleaning up the data set.  There are several data points that are superfluous given the analysis methods being used, and should therefore be removed.
+
+## Dataset Cleanup
+
+Start by loading in the data.  This will unfortunately be computer-specific.  Modify as needed.
+
+Load the data in with
+```{r load}
+`2XKO.Data`<-read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv",sep='')
+```
+Due to the data being restricted to tsv files, I ran into some problems with data not being saved the way I intended.  I had to do a bit of reworking, hence the underscores in the column names.
+
+Check everything loaded in correctly.
+```{r data header}
+head(`2XKO.Data`)
+```
+Excellent.
+
+Make the data easier to reference by changing it's name to something easier to type.
+```{r name fix}
+data<-`2XKO.Data`
+```
+
+~~Steal some code from Stackoverflow to make the first row the header.~~  This used to be required in order to assign the first row as the header, but now it appears to set the first row to the header automatically.  I do not know why this has changed, but I will leave this old code here just in case it decides to revert itself.
+```{r clean header}
+#header.true <- function(df) {
+#    names(df) <- as.character(unlist(df[1,]))
+#    df[-1,]
+#}
+#data<-header.true(data)
+#head(data)
+```
+Perfect.
+
+Now to get rid of the superfluous columns.  Columns 4, 5, and 6 never change and are therefore unnecessary.
+
+```{r remove columns}
+data<-subset(data,select = -c(4,5,6))
+```
+
+There was originally a column 14 of various extra notes that didn't fit into the other categories.  I removed that last column manually, as it was causing too many problems when converted to .tsv.
+
+Now with the data cleaned up, I can start analyzing.
+
+## T-test
+
+So, let's start with a simple t-test.  I'm curious as to whether my win rate is 50% (average in a 1v1 competitive sport) or not.  So H0:mu=0.5, H1:mu=/0.5.
+
+I was going to try and be fancy and convert column 8 to a clean win/loss record, but it's a lot less work to just go through the original file and add the column manually.
+```{r t}
+print(data$Win.)
+print(mean(data$Win.))
+#60%.
+t.test(data$Win., mu=0.5)
+```
+A p-value of 0.33 is pretty conclusive.  I fail to reject the null.  There is no evidence to suggest that my win rate is not 50%.
+
+
+## Fisher Exact Test
+
+I would now like to test if my fuse choice affected my win rate.  You can see in the data that I swapped from Sidekick to Double Down in game seven.
+
+Start by making the 2x2 table.
+```{r fuse}
+#Make a 2x2 matrix of the given quantities with the correct row/column names
+fuse<-matrix(c(3,7,3,12),2,2, dimnames=list(c("Sidekick","Double Down"), c("Loss","Win")))
+print(fuse)
+```
+
+Then run the test.
+```{r fisher}
+#A quite test function to make sure the Fisher test isn't wildly off base
+dhyper(x=3, m=15, n=10, k=6)
+#0.31.  Expect a larger p-value than this
+fisher.test(fuse)
+```
+A p-value of 0.65 is conclusive.  I fail to reject the null.  There is no evidence to suggest that my change in fuse affected my win rate.
+
+
+## Linear Regression
+
+I'm not entirely sure if this is a viable usage of Linear Regression, but I'm going to try and see if game number or match duration correlate with winning.
+
+First, I'm going to have to rework the Match_duration data.  The different number of matches per game complicates things somewhat, so I'm going to add an "average match duration" column to simplify things.
+```{r match_duration rework}
+#Make the list
+list<-c(26, 52.3, 56.7, 53.7, 54, 76, 77.3, 65.5, 76, 78, 79, 64, 65, 74.5, 60.5, 61.3, 69.5, 64, 65, 64.3, 60.5, 54, 61, 62.5, 52)
+#Merge it with the original dataset
+data$Average_match_duration <- list
+#Check it worked
+head(data)
+```
+Beautiful.  Plot it to have an idea of what I'm working with.
+
+```{r linplot}
+plot(data$Game_number,data$Average_match_duration)
+```
+I could argue a vague downward trend, but it's pretty random.
+
+Now to analyse.
+```{r linear_regression}
+#Run the linear regression
+summary(lm(Win.~Game_number*Average_match_duration,data=data))
+```
+
+Not unexpected. I wasn't seeing much of a relation in the plot either, so I didn't expect one to materialize here.
+
+I guess I could try logging it to see if that changes anything, but I doubt it.
+
+```{r loglinplot}
+summary(lm(Win.~log(Game_number)*log(Average_match_duration),data=data))
+```
+
+As expected.  If anything it got a touch worse.  I didn't log my wins because that creates errors.
+
+## Log-likelihood/support
+
+Finally, let's do a credible interval for my win rate.
+
+```{r CI}
+#Create a sequence of values for the axis
+p<-seq(from=0,to=1,len=100)
+#Set up the difference between our observed data and the average
+support<-function(p){dbinom(14,25,p,log=T)-dbinom(14,25,14/25,log=T)}
+plot(p,support(p))
+#Set the lower bound and mean
+abline(h=-2)
+abline(v=14/25)
+
+#Increase the support to normalize
+f<-function(p){support(p)+2}
+uniroot(f,c(0.2,0.5))
+#0.363
+uniroot(f,c(0.6,0.9))
+#0.745
+```
+So the credible interval, that being the range within which there is a 95% of my true mean winrate being contained, is (0.363,0.745).  That is a wide range.  Since I was looking for a significant difference from 0.5, it is far too wide to draw any conclusions from.
+
+
+# Conclusion
+
+So overall, looking back over the data and analysis, I can conclude that I failed to conclude much of anything.  I was unable to derive any significant observations or conclusions from the data I had gathered.  This is not altogether unsurprising, as the dataset is quite small.  A dataset several times larger would likely be needed in order to derive statistically significant conclusions from.
