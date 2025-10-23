@@ -53,15 +53,21 @@ This data was collected both during the match and afterward.  This was facilitat
 
 # The code
 
-Moving into the actual analysis, I need to start by cleaning up the data set.  There are several data points that are superfluous given the analysis methods being used, and should therefore be removed.
+Moving into the actual analysis, I need to start by cleaning up the data set.  There are several variables that are superfluous given the analysis methods being used, and should therefore be removed.
 
 ## Dataset Cleanup
 
 Start by loading in the data.  This will unfortunately be computer-specific.  Modify as needed.
 
 Load the data in with
+
 ```{r load}
-`2XKO.Data`<-read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv",sep='')
+#For my home rig
+`2XKO.Data`<-read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
+#For my laptop
+#`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
+#or find it yourself
+#file.choose()
 ```
 Due to the data being restricted to tsv files, I ran into some problems with data not being saved the way I intended.  I had to do a bit of reworking, hence the underscores in the column names.
 
@@ -71,18 +77,18 @@ head(`2XKO.Data`)
 ```
 Excellent.
 
-Make the data easier to reference by changing it's name to something easier to type.
+Make the data easier to reference by changing its name to something easier to type.
 ```{r name fix}
-data<-`2XKO.Data`
+dat <- `2XKO.Data`
 ```
 
 ~~Steal some code from Stackoverflow to make the first row the header.~~  This used to be required in order to assign the first row as the header, but now it appears to set the first row to the header automatically.  I do not know why this has changed, but I will leave this old code here just in case it decides to revert itself.
 ```{r clean header}
 #header.true <- function(df) {
-#    names(df) <- as.character(unlist(df[1,]))
-#    df[-1,]
+#    names(df) <- as.character(unlist(df[1, ]))
+#    df[-1, ]
 #}
-#data<-header.true(data)
+#data <- header.true(data)
 #head(data)
 ```
 Perfect.
@@ -90,7 +96,7 @@ Perfect.
 Now to get rid of the superfluous columns.  Columns 4, 5, and 6 never change and are therefore unnecessary.
 
 ```{r remove columns}
-data<-subset(data,select = -c(4,5,6))
+dat <- subset(dat, select = -c(4, 5, 6))
 ```
 
 There was originally a column 14 of various extra notes that didn't fit into the other categories.  I removed that last column manually, as it was causing too many problems when converted to .tsv.
@@ -99,16 +105,18 @@ Now with the data cleaned up, I can start analyzing.
 
 ## T-test
 
-So, let's start with a simple t-test.  I'm curious as to whether my win rate is 50% (average in a 1v1 competitive sport) or not.  So H0:mu=0.5, H1:mu=/0.5.
+So, let's start with a simple t-test.  I'm curious as to whether my average round duration differs between the games I win and the games I lose.  So H0:mu1=mu2, H1:mu1=/mu2.
 
-I was going to try and be fancy and convert column 8 to a clean win/loss record, but it's a lot less work to just go through the original file and add the column manually.
-```{r t}
-print(data$Win.)
-print(mean(data$Win.))
-#60%.
-t.test(data$Win., mu=0.5)
+I was going to try and be fancy and convert column 8 to a clean win/loss record and column 10 to an average round duration, but that doesn't really work, so I'll make the relevant lists manually.
+
+```{r t test}
+#Create two lists of average round durations, one of matches I won, one of matches I lost.
+duration_l <- c(53.7, 54, 76, 77.3, 65, 74.5, 60.5, 69.5, 64.3, 52)
+duration_w <- c(26, 52.3, 56.7, 65.5, 76, 78, 79, 64, 61.3, 64, 65, 60.5, 54, 61, 62.5)
+t.test(duration_l, duration_w)
 ```
-A p-value of 0.33 is pretty conclusive.  I fail to reject the null.  There is no evidence to suggest that my win rate is not 50%.
+
+A p-value of 0.51 is conclusive.  I fail to reject the null.  There is no evidence to suggest that my average round duration differs between the games I win and the games I lose.
 
 
 ## Fisher Exact Test
@@ -118,15 +126,15 @@ I would now like to test if my fuse choice affected my win rate.  You can see in
 Start by making the 2x2 table.
 ```{r fuse}
 #Make a 2x2 matrix of the given quantities with the correct row/column names
-fuse<-matrix(c(3,7,3,12),2,2, dimnames=list(c("Sidekick","Double Down"), c("Loss","Win")))
+fuse <- matrix(c(3, 7, 3, 12), 2, 2, dimnames=list(c("Sidekick", "Double Down"), c("Loss", "Win")))
 print(fuse)
 ```
 
 Then run the test.
 ```{r fisher}
-#A quite test function to make sure the Fisher test isn't wildly off base
-dhyper(x=3, m=15, n=10, k=6)
-#0.31.  Expect a larger p-value than this
+#A quite test function to make sure the Fisher test isn't wildly off base.
+sum(dhyper(x=0:3, m=15, n=10, k=6))
+#0.455.  Expect a larger p-value from the Fisher test.
 fisher.test(fuse)
 ```
 A p-value of 0.65 is conclusive.  I fail to reject the null.  There is no evidence to suggest that my change in fuse affected my win rate.
@@ -134,39 +142,56 @@ A p-value of 0.65 is conclusive.  I fail to reject the null.  There is no eviden
 
 ## Linear Regression
 
-I'm not entirely sure if this is a viable usage of Linear Regression, but I'm going to try and see if game number or match duration correlate with winning.
+I'm not entirely sure if this is a viable usage of Linear Regression, but I'm going to try and see if game number or match duration correlate with my win rate.
 
 First, I'm going to have to rework the Match_duration data.  The different number of matches per game complicates things somewhat, so I'm going to add an "average match duration" column to simplify things.
 ```{r match_duration rework}
 #Make the list
-list<-c(26, 52.3, 56.7, 53.7, 54, 76, 77.3, 65.5, 76, 78, 79, 64, 65, 74.5, 60.5, 61.3, 69.5, 64, 65, 64.3, 60.5, 54, 61, 62.5, 52)
+duration <- c(26, 52.3, 56.7, 53.7, 54, 76, 77.3, 65.5, 76, 78, 79, 64, 65, 74.5, 60.5, 61.3, 69.5, 64, 65, 64.3, 60.5, 54, 61, 62.5, 52)
 #Merge it with the original dataset
-data$Average_match_duration <- list
+dat$Average_match_duration <- duration
 #Check it worked
-head(data)
+head(dat)
 ```
 Beautiful.  Plot it to have an idea of what I'm working with.
 
 ```{r linplot}
-plot(data$Game_number,data$Average_match_duration)
+plot(dat$Game_number, dat$Average_match_duration)
 ```
+
 I could argue a vague downward trend, but it's pretty random.
 
 Now to analyse.
 ```{r linear_regression}
 #Run the linear regression
-summary(lm(Win.~Game_number*Average_match_duration,data=data))
+summary(lm(Win. ~ Game_number * Average_match_duration, data=dat))
 ```
 
-Not unexpected. I wasn't seeing much of a relation in the plot either, so I didn't expect one to materialize here.
+Not unexpected. I wasn't seeing much of a relation in the plot either, so I didn't expect one to materialize here.  I see no evidence to suggest a correlation between my match duration, the number of games I have played, and my win rate.
 
-I guess I could try logging it to see if that changes anything, but I doubt it.
+I'll try cutting the interaction term and see if that changes anything.
+
+```{r remove interation}
+summary(lm(Win. ~ Game_number + Average_match_duration, data=dat))
+```
+
+Worse in every respect.
+
+Maybe using just the average match duration will yield a relation?
+
+```{r remove game_number}
+summary(lm(Win. ~ Average_match_duration, data=dat))
+```
+
+Decidedly not.
+
+I guess I could try logging the variables to see if that changes anything, but I doubt it.  Note that I can't log Win., as that would cause errors.
 
 ```{r loglinplot}
-summary(lm(Win.~log(Game_number)*log(Average_match_duration),data=data))
+summary(lm(Win. ~ log(Game_number) * log(Average_match_duration), data=dat))
 ```
 
-As expected.  If anything it got a touch worse.  I didn't log my wins because that creates errors.
+As expected.  If anything it got a touch worse.
 
 ## Log-likelihood/support
 
@@ -174,22 +199,22 @@ Finally, let's do a credible interval for my win rate.
 
 ```{r CI}
 #Create a sequence of values for the axis
-p<-seq(from=0,to=1,len=100)
+p<-seq(from=0, to=1, len=100)
 #Set up the difference between our observed data and the average
-support<-function(p){dbinom(14,25,p,log=T)-dbinom(14,25,14/25,log=T)}
-plot(p,support(p))
+support<-function(p){dbinom(14,25, p, log=T)-dbinom(14, 25, 14/25, log=T)}
+plot(p, support(p))
 #Set the lower bound and mean
 abline(h=-2)
 abline(v=14/25)
 
 #Increase the support to normalize
 f<-function(p){support(p)+2}
-uniroot(f,c(0.2,0.5))
+uniroot(f, c(0.2, 0.5))
 #0.363
-uniroot(f,c(0.6,0.9))
+uniroot(f, c(0.6, 0.9))
 #0.745
 ```
-So the credible interval, that being the range within which there is a 95% of my true mean winrate being contained, is (0.363,0.745).  That is a wide range.  Since I was looking for a significant difference from 0.5, it is far too wide to draw any conclusions from.
+So the credible interval, that being the range within which there is a 95% of my true mean winrate being contained, is (0.363, 0.745).  That is a wide range.  Since I was looking for a significant difference from 0.5, it is far too wide to draw any conclusions from.
 
 
 # Conclusion
