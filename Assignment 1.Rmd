@@ -9,6 +9,11 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, include=FALSE}
+#Set working directory in order to pull the image
+setwd('C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project')
+```
+
 # Introduction
 
 The data I have chosen for this assignment is my first 25 matches of 2XKO.  2XKO is, in the words of its creators Riot Games, "a 2v2 tag-team fighting game".  It is structured as two teams of two characters dueling each other to knockout in a best-of-three match.  The victor of each round is whoever depletes their opponent's life total to zero first.
@@ -49,7 +54,7 @@ An explanation for each column of the data:
 
 This data was collected both during the match and afterward.  This was facilitated by 2XKO's built-in match replay system, which lets you rewatch matches you have played previously at your leisure.  This feature was very helpful in gathering this data, particularly the match duration data.
 
-
+![My data collection station](Images\\Selfie.jpg){width=40%}
 
 # The code
 
@@ -63,7 +68,7 @@ Load the data in with
 
 ```{r load}
 #For my home rig
-`2XKO.Data`<-read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
+`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
 #For my laptop
 #`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
 #or find it yourself
@@ -81,18 +86,7 @@ Make the data easier to reference by changing its name to something easier to ty
 ```{r name fix}
 dat <- `2XKO.Data`
 ```
-
-~~Steal some code from Stackoverflow to make the first row the header.~~  This used to be required in order to assign the first row as the header, but now it appears to set the first row to the header automatically.  I do not know why this has changed, but I will leave this old code here just in case it decides to revert itself.
-```{r clean header}
-#header.true <- function(df) {
-#    names(df) <- as.character(unlist(df[1, ]))
-#    df[-1, ]
-#}
-#data <- header.true(data)
-#head(data)
-```
-Perfect.
-
+  
 Now to get rid of the superfluous columns.  Columns 4, 5, and 6 never change and are therefore unnecessary.
 
 ```{r remove columns}
@@ -155,7 +149,7 @@ head(dat)
 ```
 Beautiful.  Plot it to have an idea of what I'm working with.
 
-```{r linplot}
+```{r linplot, fig.height = 4, fig.width = 4}
 plot(dat$Game_number, dat$Average_match_duration)
 ```
 
@@ -177,14 +171,6 @@ summary(lm(Win. ~ Game_number + Average_match_duration, data=dat))
 
 Worse in every respect.
 
-Maybe using just the average match duration will yield a relation?
-
-```{r remove game_number}
-summary(lm(Win. ~ Average_match_duration, data=dat))
-```
-
-Decidedly not.
-
 I guess I could try logging the variables to see if that changes anything, but I doubt it.  Note that I can't log Win., as that would cause errors.
 
 ```{r loglinplot}
@@ -197,7 +183,7 @@ As expected.  If anything it got a touch worse.
 
 Finally, let's do a credible interval for my win rate.
 
-```{r CI}
+```{r CI, fig.height = 4, fig.width = 4}
 #Create a sequence of values for the axis
 p<-seq(from=0, to=1, len=100)
 #Set up the difference between our observed data and the average
