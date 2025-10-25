@@ -2,7 +2,9 @@
 title: "Assignment 1"
 author: "Marcus DeSante"
 date: "2025-10-15"
-output: pdf_document
+output:
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,16 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 #Set working directory in order to pull the image
-setwd('C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project')
+#For my home rig
+#setwd('C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project')
+#For my laptop
+setwd('C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project')
 ```
 
 # Introduction
 
 The data I have chosen for this assignment is my first 25 matches of 2XKO.  2XKO is, in the words of its creators Riot Games, "a 2v2 tag-team fighting game".  It is structured as two teams of two characters dueling each other to knockout in a best-of-three match.  The victor of each round is whoever depletes their opponent's life total to zero first.
 
-I chose this data set because I am just starting the game, and decided it would be a good source of relatively unbiased data as I have no experience with the game. I can also see how my choices affect my gameplay and if my win rate changes over time.  Additionally, it allowed me to use this assignment as a source of motivation to play the game, as it was now part of my grade.
+I chose this data set because, while I have some passing familiarity with games from the genre (~70 hours), this specific subgenre (tag fighter) I am unfamiliar with.  I am just starting this game, and therefore I decided it would be a good source of relatively unbiased data. I can also see how my choices affect my gameplay and if my win rate changes over time.  Additionally, it allowed me to use this assignment as a source of motivation to play the game, as it was now part of my grade.
 
-These types of games are known for their complexity, so I will omit many of the details of how this game functions.  However, I will quickly cover the elements that appear in my data.  I have also included several screenshots of the game to act as visual aides.
+These types of games are known for their complexity, so I will omit many of the details of how this game functions.  However, I will quickly cover the elements that appear in my data.
 
 
 An explanation for each column of the data:
@@ -68,9 +73,9 @@ Load the data in with
 
 ```{r load}
 #For my home rig
-`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
+#`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
 #For my laptop
-#`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
+`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
 #or find it yourself
 #file.choose()
 ```
@@ -126,7 +131,7 @@ print(fuse)
 
 Then run the test.
 ```{r fisher}
-#A quite test function to make sure the Fisher test isn't wildly off base.
+#A quick test function to make sure the Fisher test isn't wildly off base.
 sum(dhyper(x=0:3, m=15, n=10, k=6))
 #0.455.  Expect a larger p-value from the Fisher test.
 fisher.test(fuse)
@@ -136,12 +141,13 @@ A p-value of 0.65 is conclusive.  I fail to reject the null.  There is no eviden
 
 ## Linear Regression
 
-I'm not entirely sure if this is a viable usage of Linear Regression, but I'm going to try and see if game number or match duration correlate with my win rate.
+I'm not entirely sure if this is a viable usage of Linear Regression, as I am not sure the data is linear.  However, I'm going to try and see if game number or match duration correlate with my win rate.
 
 First, I'm going to have to rework the Match_duration data.  The different number of matches per game complicates things somewhat, so I'm going to add an "average match duration" column to simplify things.
 ```{r match_duration rework}
 #Make the list
-duration <- c(26, 52.3, 56.7, 53.7, 54, 76, 77.3, 65.5, 76, 78, 79, 64, 65, 74.5, 60.5, 61.3, 69.5, 64, 65, 64.3, 60.5, 54, 61, 62.5, 52)
+duration <- c(26, 52.3, 56.7, 53.7, 54, 76, 77.3, 65.5, 76, 78, 79, 64,
+              65, 74.5, 60.5, 61.3, 69.5, 64, 65, 64.3, 60.5, 54, 61, 62.5, 52)
 #Merge it with the original dataset
 dat$Average_match_duration <- duration
 #Check it worked
@@ -153,7 +159,7 @@ Beautiful.  Plot it to have an idea of what I'm working with.
 plot(dat$Game_number, dat$Average_match_duration)
 ```
 
-I could argue a vague downward trend, but it's pretty random.
+I could argue a vague downward trend, but it's pretty random.  Point #1 is an outlier because my opponent left halfway through the second round.
 
 Now to analyse.
 ```{r linear_regression}
