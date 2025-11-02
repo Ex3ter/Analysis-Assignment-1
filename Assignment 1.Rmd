@@ -14,21 +14,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, include=FALSE}
 #Set working directory in order to pull the image
 #For my home rig
-#setwd('C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project')
+setwd('C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project')
 #For my laptop
-setwd('C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project')
+#setwd('C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project')
 ```
 
 # Introduction
 
 The data I have chosen for this assignment is my first 25 matches of 2XKO.  2XKO is, in the words of its creators Riot Games, "a 2v2 tag-team fighting game".  It is structured as two teams of two characters dueling each other to knockout in a best-of-three match.  The victor of each round is whoever depletes their opponent's life total to zero first.
 
-I chose this data set because, while I have some passing familiarity with games from the genre (~70 hours), this specific subgenre (tag fighter) I am unfamiliar with.  I am just starting this game, and therefore I decided it would be a good source of relatively unbiased data. I can also see how my choices affect my gameplay and if my win rate changes over time.  Additionally, it allowed me to use this assignment as a source of motivation to play the game, as it was now part of my grade.
+I chose this data set because, while I have some passing familiarity with games from the genre (~70 hours), I am unfamiliar with this specific subgenre (tag fighter).  The game came out just after this assignment, and therefore I decided it would be a good source of relatively unbiased data. I can also see how my choices affect my gameplay and if my win rate changes over time.  Additionally, it allowed me to use this assignment as a source of motivation to play the game, as it was now part of my grade.
 
 These types of games are known for their complexity, so I will omit many of the details of how this game functions.  However, I will quickly cover the elements that appear in my data.
 
 
-An explanation for each column of the data:
+An explanation of each column of the data:
 
   Date:  The date that the given row entry was recorded.
   
@@ -74,12 +74,14 @@ Load the data in with
 ```{r load}
 #For my home rig
 #`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
+`2XKO.Data` <- read.table("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.txt", sep='')
 #For my laptop
-`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
+#`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
+#`2XKO.Data` <- read.table("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.txt", sep='')
 #or find it yourself
 #file.choose()
 ```
-Due to the data being restricted to tsv files, I ran into some problems with data not being saved the way I intended.  I had to do a bit of reworking, hence the underscores in the column names.
+Due to the data being restricted to .tsv files, I ran into some problems with data not being saved the way I intended.  I had to do a bit of reworking, hence the underscores in the column names.
 
 Check everything loaded in correctly.
 ```{r data header}
@@ -106,7 +108,7 @@ Now with the data cleaned up, I can start analyzing.
 
 So, let's start with a simple t-test.  I'm curious as to whether my average round duration differs between the games I win and the games I lose.  So H0:mu1=mu2, H1:mu1=/mu2.
 
-I was going to try and be fancy and convert column 8 to a clean win/loss record and column 10 to an average round duration, but that doesn't really work, so I'll make the relevant lists manually.
+I was going to try and be fancy and use R to convert column 8 to a clean win/loss record and column 10 to an average round duration, but if that is possible I don't know how, so I'll make the relevant lists manually.
 
 ```{r t test}
 #Create two lists of average round durations, one of matches I won, one of matches I lost.
@@ -177,7 +179,7 @@ summary(lm(Win. ~ Game_number + Average_match_duration, data=dat))
 
 Worse in every respect.
 
-I guess I could try logging the variables to see if that changes anything, but I doubt it.  Note that I can't log Win., as that would cause errors.
+I guess I could try logging the variables to see if that changes anything, but I doubt it.  Note that I can't log Win., as that would cause errors (can't log(0)).
 
 ```{r loglinplot}
 summary(lm(Win. ~ log(Game_number) * log(Average_match_duration), data=dat))
@@ -187,7 +189,7 @@ As expected.  If anything it got a touch worse.
 
 ## Log-likelihood/support
 
-Finally, let's do a credible interval for my win rate.
+Finally, I'll do a credible interval for my win rate.
 
 ```{r CI, fig.height = 4, fig.width = 4}
 #Create a sequence of values for the axis
