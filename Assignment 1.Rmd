@@ -74,14 +74,14 @@ Load the data in with
 ```{r load}
 #For my home rig
 #`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.csv", sep='')
-`2XKO.Data` <- read.table("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.txt", sep='')
+`2XKO.Data` <- read.table("C:\\Users\\mcd12\\Desktop\\University\\Masters Year 2\\Analysis project\\2XKO Data.txt", sep=' ', head=TRUE)
 #For my laptop
 #`2XKO.Data` <- read.csv("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.csv", sep='')
 #`2XKO.Data` <- read.table("C:\\Users\\mcd12\\OneDrive\\Desktop\\Postgrad\\Analysis\\Analysis project\\2XKO Data.txt", sep='')
 #or find it yourself
 #file.choose()
 ```
-Due to the data being restricted to .tsv files, I ran into some problems with data not being saved the way I intended.  I had to do a bit of reworking, hence the underscores in the column names.
+Due to the data being restricted to .txt files, I ran into some problems with data not being saved the way I intended.  I had to do a lot of reworking, hence the underscores in the column names.
 
 Check everything loaded in correctly.
 ```{r data header}
